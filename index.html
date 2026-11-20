@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="et">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Võrdle Saare Ehituspuidu sisevoodrilaudu ja arvuta 6 × 4 m lae materjalikulu.">
+  <title>Lae voodrilaua hinnakalkulaator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --background: #f6f4ec;
+      --surface: #fffdf8;
+      --text: #20291f;
+      --muted: #526050;
+      --border: #d7dbce;
+      --accent: #25543b;
+      --result: #e5efe5;
+      font-family: system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: #151c17;
+        --surface: #202923;
+        --text: #edf3ec;
+        --muted: #b7c7b9;
+        --border: #465449;
+        --accent: #a7ddbb;
+        --result: #24382d;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--background); color: var(--text); }
+    main {
+      display: grid;
+      gap: 1.25rem;
+      max-width: 56rem;
+      margin: auto;
+      padding: clamp(1rem, 5vw, 3rem);
+    }
+    h1 { margin: 0; line-height: 1.12; font-size: clamp(1.85rem, 5vw, 3rem); }
+    p { margin: 0; }
+    header p { margin-top: .55rem; }
+    a { color: var(--accent); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .viz-controls, .viz-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .85rem;
+    }
+    .form-label { display: grid; min-width: 0; gap: .35rem; font-weight: 600; }
+    .form-select {
+      width: 100%;
+      min-height: 2.75rem;
+      padding: .45rem .65rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      font: inherit;
+      font-weight: 400;
+    }
+    .card { padding: 1rem; background: var(--surface); border-radius: .75rem; }
+    .card:last-child { background: var(--result); }
+    .viz-stat-value {
+      margin: .25rem 0;
+      color: var(--accent);
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 650;
+    }
+    .text-muted { color: var(--muted); }
+    .text-small { font-size: .875rem; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    summary { cursor: pointer; width: fit-content; padding: .4rem 0; font-weight: 650; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; line-height: 1.35; }
+    th, td { padding: .65rem .3rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    td .text-small { display: block; margin-top: .2rem; }
+    .text-end { text-align: right; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    footer { display: grid; gap: .5rem; border-top: 1px solid var(--border); padding-top: .9rem; }
+    @media (max-width: 36rem) {
+      .viz-controls, .viz-grid { grid-template-columns: 1fr; }
+      table { font-size: .875rem; }
+    }
+  </style>
+</head>
+<body>
+<main id="lae-voodrilaud">
+  <header>
+    <h1>Lae voodrilaua hinnakalkulaator</h1>
+    <p class="text-muted">6 × 4 m · 24 m² · hinnad koos käibemaksuga</p>
+  </header>
+  <div class="viz-controls">
+    <label class="form-label">Voodrilaud<select class="form-select" data-field="board"></select></label>
+    <label class="form-label">Laua paigaldussuund<select class="form-select" data-field="span">
+      <option value="4000">Piki 4 m külge</option>
+      <option value="6000">Piki 6 m külge</option>
+    </select></label>
+    <label class="form-label">Laua ostupikkus<select class="form-select" data-field="length"></select></label>
+    <label class="form-label">Materjalivaru<select class="form-select" data-field="reserve">
+      <option value="0">0%</option><option value="5">5%</option><option value="10">10%</option>
+      <option value="15">15%</option><option value="20">20%</option>
+    </select></label>
+  </div>
+  <div class="viz-grid" aria-live="polite">
+    <div class="card viz-stat">
+      <p class="text-small text-muted">Pindalahinnang</p>
+      <p class="viz-stat-value tabular-nums" data-output="area"></p>
+      <p class="text-small" data-output="areaDetail"></p>
+    </div>
+    <div class="card viz-stat">
+      <p class="text-small text-muted">Tervete laudade ostuhind</p>
+      <p class="viz-stat-value tabular-nums" data-output="total"></p>
+      <p class="text-small" data-output="quantity"></p>
+    </div>
+  </div>
+  <p class="text-small text-muted" data-output="spec"></p>
+  <details>
+    <summary class="cursor-interaction">Võrdle kõiki 22 voodrilauda</summary>
+    <div class="table-responsive">
+      <table class="table table-sm">
+        <caption class="sr-only">Voodrilaudade hinnavõrdlus valitud suuna ja varuga</caption>
+        <thead><tr><th scope="col">Voodrilaud</th><th scope="col" class="text-end">Pindalahinnang</th><th scope="col" class="text-end">Terved lauad</th></tr></thead>
+        <tbody data-output="comparison"></tbody>
+      </table>
+    </div>
+  </details>
+  <footer class="text-small text-muted">
+    <p>Pindalahinnang lähtub ruutmeetrihinnast. Tervete laudade ostuhind põhineb otsavuukideta paigaldusel ning sisaldab pikkusest tulenevat lõikejääki. Võrdlustabel kasutab lühimat lauda, mis ulatub üle terve rea.</p>
+    <p>95 ja 121 mm laudade kattelaiused on tuletatud hinnakirjast. Pikkused pärinevad hinnakirja tabelist ning võivad erineda päringuvormi valikust.</p>
+    <p>Hinnakirja seis 20.11.2026 · <a href="https://ehituspuit.ee/product-category/voodrilauad/sisevoodrilaud/">Saare Ehituspuit</a></p>
+  </footer>
+  <noscript>Kalkulaatori kasutamiseks luba brauseris JavaScript.</noscript>
+</main>
+<script>
+(() => {
+  const root = document.getElementById("lae-voodrilaud");
+  const catalog = [
+    ["STM 12×120 AB mä",[3300,4200,5400],1.36,12.4],
+    ["STP0 14×121 BC KU",[3600,4200,4500,4800,5100,5400],0.81,7.33],
+    ["STP0 14×121 lakk kuma AB",[3600,4200,4500,5100,5400,5700],2.6,23.67],
+    ["STP-J 12×120 C KU",[3900,5400],0.87,7.89],
+    ["STS 12×120 AB mä",[3600,4800,5400],1.43,12.96],
+    ["STS0 14×121 AB ku",[3000,3300,5400],1.92,17.47],
+    ["STV 12×120 AB ku",[3000,3600,4200,5100],1.36,12.4],
+    ["STV 12×120 AB mä",[3000,4200,5100],1.36,12.4],
+    ["STV 12×96 AB KU",[2700,3600,4200,5100],1.12,13.13],
+    ["STV 12×96 AB MÄ",[2700,3600,4200,5100],1.12,13.13],
+    ["STP-J 12×120 C MÄ",[3900],0.74,6.76],
+    ["TGV 12×120 Ku, A-B",[3000,4200,5100],1.43,12.96],
+    ["STP-J 12×96 AB ku",[2700],1.05,12.4],
+    ["TGV 11×96 AB ku",[4800,5100],1.12,13.13],
+    ["STP-J 12×96 C ku",[3900],0.62,7.29],
+    ["STF0 12×120 AB KU",[3000,3300,3600,3900,4200,5100],1.55,14.09],
+    ["STF0 12×120 C ku",[3000,3300,5100,5400],0.68,6.2],
+    ["TGV 12×120 AB mä",[3000,3600,4800,5100],1.3,11.84],
+    ["STP-J 12×120 AB ku",[3600,6000],1.43,12.96],
+    ["TGV 14×146 BC mänd",[3300,3600,4200,4800,5100,5400],1.18,8.59],
+    ["TGV-J 12×95 C mä",[3600],0.62,7.29],
+    ["TGV 9×95 AB mä",[3300,3600,4200],0.87,10.22]
+  ].map(([name, lengths, perMeter, perArea]) => {
+    const nominal = Number(name.match(/×(\d+)/)[1]);
+    const cover = {95: 85, 96: 87, 120: 110, 121: 110, 146: 137}[nominal];
+    return {name, lengths, perMeter, perArea, cover, inferred: nominal === 95 || nominal === 121, nominal};
+  });
+
+  const field = name => root.querySelector('[data-field="' + name + '"]');
+  const output = name => root.querySelector('[data-output="' + name + '"]');
+  const board = field("board");
+  const span = field("span");
+  const length = field("length");
+  const reserve = field("reserve");
+  const eur = new Intl.NumberFormat("et-EE", {style: "currency", currency: "EUR"});
+  const number = new Intl.NumberFormat("et-EE", {maximumFractionDigits: 2});
+  const meters = mm => number.format(mm / 1000) + " m";
+
+  function calculate(product, run, stock, extra) {
+    const rows = Math.ceil((24000000 / run) / product.cover);
+    const count = Math.ceil(rows * (100 + extra) / 100);
+    const linearMeters = count * stock / 1000;
+    const area = 24 * (100 + extra) / 100;
+    return {area, areaCost: area * product.perArea, count, linearMeters,
+      wholeCost: stock >= run ? linearMeters * product.perMeter : null};
+  }
+
+  function setLengths(preferred) {
+    const product = catalog[Number(board.value)];
+    const run = Number(span.value);
+    const firstFit = product.lengths.find(stock => stock >= run);
+    length.replaceChildren(...product.lengths.map(stock =>
+      new Option(meters(stock) + (stock < run ? " · vajab otsavuuki" : ""), stock)));
+    length.value = product.lengths.includes(preferred) ? preferred :
+      (firstFit ?? product.lengths.at(-1));
+  }
+
+  function render() {
+    const product = catalog[Number(board.value)];
+    const run = Number(span.value);
+    const stock = Number(length.value);
+    const extra = Number(reserve.value);
+    const result = calculate(product, run, stock, extra);
+    output("area").textContent = eur.format(result.areaCost);
+    output("areaDetail").textContent = number.format(result.area) + " m² × " +
+      eur.format(product.perArea) + "/m²";
+    output("total").textContent = result.wholeCost === null ? "Vajab otsavuuki" :
+      eur.format(result.wholeCost);
+    output("quantity").textContent = result.wholeCost === null ? "Valitud laud on reast lühem." :
+      result.count + " lauda × " + meters(stock) + " · " +
+      number.format(result.linearMeters) + " jm";
+    const widthNote = product.inferred ? " (tuletatud hinnakirjast)" :
+      product.nominal === 96 ? " (poe üldmärkuse järgi)" : "";
+    output("spec").textContent = "Kattelaius " + product.cover + " mm" + widthNote +
+      " · " + eur.format(product.perMeter) + "/jm";
+
+    const comparison = catalog.map(item => {
+      const fit = item.lengths.find(candidate => candidate >= run);
+      return {item, fit, result: calculate(item, run, fit ?? 0, extra)};
+    }).sort((a, b) => (a.result.wholeCost ?? Infinity) - (b.result.wholeCost ?? Infinity) ||
+      a.result.areaCost - b.result.areaCost);
+    output("comparison").replaceChildren(...comparison.map(({item, fit, result}) => {
+      const row = document.createElement("tr");
+      const label = row.insertCell();
+      label.textContent = item.name;
+      const prices = document.createElement("span");
+      prices.className = "text-small text-muted";
+      prices.textContent = eur.format(item.perArea) + "/m² · " + eur.format(item.perMeter) + "/jm";
+      label.append(prices);
+      const area = row.insertCell();
+      area.className = "text-end tabular-nums";
+      area.textContent = eur.format(result.areaCost);
+      const whole = row.insertCell();
+      whole.className = "text-end tabular-nums";
+      whole.textContent = fit ? eur.format(result.wholeCost) : "Vajab otsavuuki";
+      if (fit) {
+        const detail = document.createElement("span");
+        detail.className = "text-small text-muted";
+        detail.textContent = result.count + " tk × " + meters(fit);
+        whole.append(detail);
+      }
+      return row;
+    }));
+  }
+
+  board.replaceChildren(...catalog.map((product, index) => new Option(product.name, index)));
+
+  const storageKey = "lae-voodrilaua-kalkulaator.v1";
+  const defaults = {board: 1, span: 4000, reserve: 10, length: 4200};
+
+  function readSettings() {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey)) ?? defaults;
+    } catch {
+      return defaults;
+    }
+  }
+
+  function restore(saved) {
+    board.value = Number.isInteger(saved?.board) && catalog[saved.board] ? saved.board : 1;
+    span.value = [4000, 6000].includes(saved?.span) ? saved.span : 4000;
+    reserve.value = [0, 5, 10, 15, 20].includes(saved?.reserve) ? saved.reserve : 0;
+    setLengths(saved?.length);
+    render();
+  }
+
+  root.addEventListener("change", event => {
+    if (event.target === board || event.target === span) setLengths();
+    render();
+    const settings = {
+      board: Number(board.value),
+      span: Number(span.value),
+      reserve: Number(reserve.value),
+      length: Number(length.value)
+    };
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(settings));
+    } catch {
+      // Calculation also works when browser storage is unavailable.
+    }
+  });
+
+  restore(readSettings());
+})();
+</script>
+</body>
+</html>
